@@ -1,0 +1,7 @@
+﻿{
+    "python.defaultInterpreterPath": "/venv/Scripts/python.exe",
+    "python.terminal.activateEnvironment": true,
+    "python.terminal.activateEnvInCurrentTerminal": true,
+    "python.linting.enabled": false,
+    "python.analysis.typeCheckingMode": "off"
+}
