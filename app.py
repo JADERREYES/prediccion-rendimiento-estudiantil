@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# CSS personalizado para efecto futurista
+# CSS personalizado para efecto futurista - VERSIÓN CORREGIDA (SIN DIFUMINADO)
 st.markdown("""
 <style>
     /* Fondo con efecto matrix */
@@ -20,13 +20,25 @@ st.markdown("""
         background: linear-gradient(135deg, #0a0f1e 0%, #1a1f2e 100%);
     }
     
-    /* Títulos con efecto neón */
+    /* TÍTULOS CORREGIDOS - SIN DIFUMINADO */
     h1, h2, h3 {
-        background: linear-gradient(90deg, #00ff9d, #00b8ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+        color: #00ff9d !important;
         font-weight: 700 !important;
-        text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+        text-shadow: 0 0 5px #00ff9d;
+        -webkit-text-fill-color: #00ff9d !important;
+        background: none !important;
+    }
+    
+    /* Título principal específico */
+    h1 {
+        color: #00ff9d !important;
+        font-size: 3.5em !important;
+        text-shadow: 0 0 10px #00ff9d;
+    }
+    
+    /* Subtítulos */
+    p, .stMarkdown p {
+        color: #00b8ff !important;
     }
     
     /* Tarjetas con efecto cristal */
@@ -41,7 +53,7 @@ st.markdown("""
     /* Botones con efecto neón */
     .stButton > button {
         background: linear-gradient(90deg, #00ff9d, #00b8ff);
-        color: #0a0f1e;
+        color: #0a0f1e !important;
         border: none;
         font-weight: bold;
         text-transform: uppercase;
@@ -97,15 +109,39 @@ st.markdown("""
         margin: 10px 0;
         font-family: 'Courier New', monospace;
         word-break: break-all;
+        color: white !important;
+    }
+    
+    /* CORRECCIÓN PARA TEXTOS DIFUMINADOS */
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] h1,
+    div[data-testid="stMarkdownContainer"] h2,
+    div[data-testid="stMarkdownContainer"] h3 {
+        color: #00ff9d !important;
+        -webkit-text-fill-color: #00ff9d !important;
+        background: none !important;
+        text-shadow: 0 0 3px #00ff9d;
+    }
+    
+    /* Texto "TERMINAL DE ANÁLISIS" específico */
+    .stMarkdown h2 {
+        color: #00b8ff !important;
+        -webkit-text-fill-color: #00b8ff !important;
+    }
+    
+    /* Texto "MATRIZ DE RESULTADOS" */
+    .stMarkdown h3 {
+        color: #ff00ff !important;
+        -webkit-text-fill-color: #ff00ff !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Header con animación
+# Header con animación - CORREGIDO
 st.markdown("""
 <div style='text-align: center; padding: 20px;'>
-    <h1 style='font-size: 4em; margin-bottom: 0;'>🔮 NEURAL CRYPT ANALYZER</h1>
-    <p style='color: #00b8ff; font-size: 1.2em; letter-spacing: 3px;'>
+    <h1 style='font-size: 4em; margin-bottom: 0; color: #00ff9d; text-shadow: 0 0 10px #00ff9d;'>🔮 NEURAL CRYPT ANALYZER</h1>
+    <p style='color: #00b8ff; font-size: 1.2em; letter-spacing: 3px; text-shadow: 0 0 5px #00b8ff;'>
         ⚡ SISTEMA DE DETECCIÓN DE ALGORITMOS CON IA ⚡
     </p>
     <hr style='border: 1px solid #00ff9d; width: 50%; margin: 20px auto; box-shadow: 0 0 10px #00ff9d;'>
@@ -124,7 +160,7 @@ else:
 with st.sidebar:
     st.markdown("""
     <div style='text-align: center; padding: 10px;'>
-        <h2 style='color: #00ff9d;'>⚡ MATRIX PROTOCOL ⚡</h2>
+        <h2 style='color: #00ff9d; text-shadow: 0 0 5px #00ff9d;'>⚡ MATRIX PROTOCOL ⚡</h2>
     </div>
     """, unsafe_allow_html=True)
     
@@ -140,7 +176,7 @@ with st.sidebar:
     st.markdown("---")
     
     # Algoritmos con diseño futurista
-    st.markdown("### 🔐 ALGORITMOS DETECTABLES")
+    st.markdown("<h3 style='color: #00ff9d;'>🔐 ALGORITMOS DETECTABLES</h3>", unsafe_allow_html=True)
     
     algoritmos_info = [
         ("🔐 Base64", "aG9sYQ== → hola", "#00ff9d"),
@@ -172,10 +208,10 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-# Área principal
+# Área principal - CORREGIDO
 st.markdown("""
 <div style='text-align: center; margin: 30px 0;'>
-    <h2 style='color: #00b8ff;'>🔍 TERMINAL DE ANÁLISIS CRIPTOGRÁFICO</h2>
+    <h2 style='color: #00b8ff; text-shadow: 0 0 8px #00b8ff; font-weight: bold;'>🔍 TERMINAL DE ANÁLISIS CRIPTOGRÁFICO</h2>
 </div>
 """, unsafe_allow_html=True)
 
@@ -232,9 +268,9 @@ if analizar_btn and texto_ingresado:
         print(f"Longitud descifrado: {len(resultado['texto_descifrado'])}")
         print("="*50)
     
-    # Timeline de análisis
+    # Timeline de análisis - CORREGIDO
     st.markdown("---")
-    st.markdown("### 📊 MATRIZ DE RESULTADOS")
+    st.markdown("<h3 style='color: #ff00ff; text-shadow: 0 0 8px #ff00ff;'>📊 MATRIZ DE RESULTADOS</h3>", unsafe_allow_html=True)
     
     col_res1, col_res2, col_res3 = st.columns(3)
     
@@ -274,7 +310,7 @@ if analizar_btn and texto_ingresado:
     
     # Resultado destacado - VERSIÓN CORREGIDA QUE SIEMPRE MUESTRA ALGO
     st.markdown("---")
-    st.markdown("### 🔓 TEXTO DESCIFRADO")
+    st.markdown("<h3 style='color: #ff00ff; text-shadow: 0 0 8px #ff00ff;'>🔓 TEXTO DESCIFRADO</h3>", unsafe_allow_html=True)
     
     # Asegurar que siempre haya algo que mostrar
     texto_a_mostrar = resultado['texto_descifrado']
@@ -337,10 +373,10 @@ elif analizar_btn and not texto_ingresado:
 st.markdown("---")
 st.markdown("""
 <div style='text-align: center; padding: 20px;'>
-    <p style='color: #00b8ff; font-size: 0.8em; letter-spacing: 2px;'>
+    <p style='color: #00b8ff; font-size: 0.8em; letter-spacing: 2px; text-shadow: 0 0 5px #00b8ff;'>
         ⚡ NEURAL CRYPT ANALYZER v2.0 ⚡
     </p>
-    <p style='color: #00ff9d; font-size: 0.7em;'>
+    <p style='color: #00ff9d; font-size: 0.7em; text-shadow: 0 0 3px #00ff9d;'>
         [ Base64 · ROT13 · César · XOR · Texto Plano ]
     </p>
     <p style='color: #444; font-size: 0.6em;'>

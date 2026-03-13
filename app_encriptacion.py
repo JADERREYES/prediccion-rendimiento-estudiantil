@@ -13,185 +13,112 @@ st.set_page_config(
 )
 
 # CSS personalizado para efecto futurista
+# CSS personalizado para efecto futurista
 st.markdown("""
 <style>
-    /* Fondo con efecto matrix */
-    .stApp {
-        background: linear-gradient(135deg, #0a0f1e 0%, #1a1f2e 100%);
-    }
-    
-    /* Títulos con efecto neón */
-    h1, h2, h3 {
-        background: linear-gradient(90deg, #00ff9d, #00b8ff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 700 !important;
-        text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
-    }
-    
-    /* Tarjetas con efecto cristal */
-    .css-1r6slb0, .css-12oz5g7 {
-        background: rgba(20, 30, 50, 0.7) !important;
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(0, 255, 157, 0.2);
-        border-radius: 15px;
-        box-shadow: 0 0 20px rgba(0, 184, 255, 0.2);
-    }
-    
-    /* Botones con efecto neón */
-    .stButton > button {
-        background: linear-gradient(90deg, #00ff9d, #00b8ff);
-        color: #0a0f1e;
-        border: none;
-        font-weight: bold;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        transition: all 0.3s ease;
-        box-shadow: 0 0 20px rgba(0, 255, 157, 0.5);
-    }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 0 30px rgba(0, 255, 157, 0.8);
-    }
-    
-    /* Inputs con efecto cyber */
-    .stTextArea textarea {
-        background: rgba(10, 20, 30, 0.8) !important;
-        border: 1px solid #00ff9d !important;
-        color: #00ff9d !important;
-        font-family: 'Courier New', monospace;
-        font-size: 16px;
-        box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
-    }
-    
-    /* Código con efecto terminal */
-    .stCodeBlock {
-        background: #0a0f1e !important;
-        border: 1px solid #00b8ff;
-        border-radius: 10px;
-    }
-    
-    /* Métricas futuristas */
-    .css-1xarl3l {
-        background: linear-gradient(135deg, rgba(0, 255, 157, 0.1), rgba(0, 184, 255, 0.1));
-        border: 1px solid #00ff9d;
-        border-radius: 10px;
-        padding: 15px;
-    }
-    
-    /* Animación de carga */
-    @keyframes pulse {
-        0% { opacity: 0.6; }
-        50% { opacity: 1; }
-        100% { opacity: 0.6; }
-    }
-    
-    .loading {
-        animation: pulse 1.5s infinite;
-        color: #00ff9d;
-        font-family: 'Courier New', monospace;
-    }
-    
-    /* Línea de tiempo futurista */
-    .timeline {
-        border-left: 2px solid #00ff9d;
-        padding-left: 20px;
-        margin-left: 10px;
-    }
-    
-    /* Efecto glitch para resultados */
-    @keyframes glitch {
-        0% { transform: translate(0); }
-        20% { transform: translate(-2px, 2px); }
-        40% { transform: translate(-2px, -2px); }
-        60% { transform: translate(2px, 2px); }
-        80% { transform: translate(2px, -2px); }
-        100% { transform: translate(0); }
-    }
-    
-    .glitch-text {
-        animation: glitch 0.3s infinite;
-    }
+
+/* Fondo con efecto matrix */
+.stApp {
+    background: linear-gradient(135deg, #0a0f1e 0%, #1a1f2e 100%);
+}
+
+/* TITULOS FUTURISTAS SIN BLUR */
+h1, h2, h3 {
+    color: #00ff9d;
+    font-weight: 700 !important;
+    text-shadow: 0 0 6px rgba(0,255,157,0.6);
+}
+
+/* Tarjetas con efecto cristal (blur reducido) */
+.css-1r6slb0, .css-12oz5g7 {
+    background: rgba(20, 30, 50, 0.8) !important;
+    backdrop-filter: blur(3px);
+    border: 1px solid rgba(0, 255, 157, 0.3);
+    border-radius: 15px;
+    box-shadow: 0 0 15px rgba(0, 184, 255, 0.2);
+}
+
+/* Botones con efecto neón */
+.stButton > button {
+    background: linear-gradient(90deg, #00ff9d, #00b8ff);
+    color: #0a0f1e;
+    border: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.5);
+}
+
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 25px rgba(0, 255, 157, 0.8);
+}
+
+/* Inputs con efecto cyber */
+.stTextArea textarea {
+    background: rgba(10, 20, 30, 0.9) !important;
+    border: 1px solid #00ff9d !important;
+    color: #00ff9d !important;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    box-shadow: 0 0 6px rgba(0, 255, 157, 0.3);
+}
+
+/* Código estilo terminal */
+.stCodeBlock {
+    background: #0a0f1e !important;
+    border: 1px solid #00b8ff;
+    border-radius: 10px;
+}
+
+/* Métricas futuristas */
+.css-1xarl3l {
+    background: linear-gradient(
+        135deg,
+        rgba(0, 255, 157, 0.1),
+        rgba(0, 184, 255, 0.1)
+    );
+    border: 1px solid #00ff9d;
+    border-radius: 10px;
+    padding: 15px;
+}
+
+/* Animación de carga */
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.loading {
+    animation: pulse 1.5s infinite;
+    color: #00ff9d;
+    font-family: 'Courier New', monospace;
+}
+
+/* Línea de tiempo futurista */
+.timeline {
+    border-left: 2px solid #00ff9d;
+    padding-left: 20px;
+    margin-left: 10px;
+}
+
+/* Efecto glitch para resultados */
+@keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 2px); }
+    40% { transform: translate(-2px, -2px); }
+    60% { transform: translate(2px, 2px); }
+    80% { transform: translate(2px, -2px); }
+    100% { transform: translate(0); }
+}
+
+.glitch-text {
+    animation: glitch 0.3s infinite;
+}
+
 </style>
-""", unsafe_allow_html=True)
-
-# Header con animación
-st.markdown("""
-<div style='text-align: center; padding: 20px;'>
-    <h1 style='font-size: 4em; margin-bottom: 0;'>🔮 NEURAL CRYPT ANALYZER</h1>
-    <p style='color: #00b8ff; font-size: 1.2em; letter-spacing: 3px;'>
-        ⚡ SISTEMA DE DETECCIÓN DE ALGORITMOS CON IA ⚡
-    </p>
-    <hr style='border: 1px solid #00ff9d; width: 50%; margin: 20px auto; box-shadow: 0 0 10px #00ff9d;'>
-</div>
-""", unsafe_allow_html=True)
-
-# Verificar modo
-if not detector.entrenado:
-    st.warning("⚠️ MODO DEMO ACTIVADO - Modelos no encontrados")
-    MODO_DEMO = True
-else:
-    st.success("✅ RED NEURONAL CONECTADA - Modelos cargados exitosamente")
-    MODO_DEMO = False
-
-# Sidebar futurista
-with st.sidebar:
-    st.markdown("""
-    <div style='text-align: center; padding: 10px;'>
-        <h2 style='color: #00ff9d;'>⚡ MATRIX PROTOCOL ⚡</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # Métricas en tiempo real
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("🧠 RED NEURONAL", "ACTIVA", "100%")
-    with col2:
-        st.metric("🎯 PRECISIÓN", "94.7%", "+2.3%")
-    
-    st.markdown("---")
-    
-    # Algoritmos con diseño futurista
-    st.markdown("### 🔐 ALGORITMOS DETECTABLES")
-    
-    algoritmos_info = [
-        ("🔐 Base64", "aG9sYQ== → hola", "#00ff9d"),
-        ("🔄 ROT13", "Uryyb → Hello", "#00b8ff"),
-        ("⚡ César", "khoor → hola (shift=3)", "#ff00ff"),
-        ("💫 XOR", "Hex: 1a2b3c → texto", "#ffaa00"),
-        ("📄 Texto Plano", "hola → hola", "#ffffff")
-    ]
-    
-    for algo, ejemplo, color in algoritmos_info:
-        st.markdown(f"""
-        <div style='border-left: 3px solid {color}; padding-left: 10px; margin: 10px 0;'>
-            <p style='color: {color}; margin: 0; font-weight: bold;'>{algo}</p>
-            <p style='color: #888; font-size: 0.8em; margin: 0;'>{ejemplo}</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("---")
-    
-    # Estado del sistema
-    st.markdown("""
-    <div style='background: rgba(0,255,157,0.1); padding: 15px; border-radius: 10px;'>
-        <p style='color: #00ff9d; margin: 0;'>🟢 SISTEMA OPERATIVO</p>
-        <p style='color: #888; font-size: 0.8em; margin: 5px 0 0 0;'>
-        ⚡ 19 características analizadas<br>
-        🔮 5 algoritmos entrenados<br>
-        🎯 2000 muestras de entrenamiento
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Área principal
-st.markdown("""
-<div style='text-align: center; margin: 30px 0;'>
-    <h2 style='color: #00b8ff;'>🔍 TERMINAL DE ANÁLISIS CRIPTOGRÁFICO</h2>
-</div>
 """, unsafe_allow_html=True)
 
 # Input con diseño futurista
