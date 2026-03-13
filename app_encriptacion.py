@@ -65,38 +65,53 @@ st.markdown("""
         box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
     }
     
-    /* Resultado con estilo especial */
-    .resultado-descifrado {
-        background: linear-gradient(135deg, #00ff9d20, #00b8ff20);
-        padding: 30px;
-        border-radius: 20px;
-        border: 2px solid #00ff9d;
-        text-align: center;
-        animation: glow 2s infinite;
+    /* Código con efecto terminal */
+    .stCodeBlock {
+        background: #0a0f1e !important;
+        border: 1px solid #00b8ff;
+        border-radius: 10px;
     }
     
-    @keyframes glow {
-        0% { box-shadow: 0 0 20px #00ff9d; }
-        50% { box-shadow: 0 0 40px #00b8ff; }
-        100% { box-shadow: 0 0 20px #00ff9d; }
-    }
-    
-    /* Input de clave XOR */
-    .stTextInput input {
-        background: rgba(10, 20, 30, 0.8) !important;
-        border: 1px solid #ffaa00 !important;
-        color: #ffaa00 !important;
-    }
-    
-    /* Output box con estilo mejorado */
-    .output-box {
-        background: rgba(0, 255, 157, 0.1);
+    /* Métricas futuristas */
+    .css-1xarl3l {
+        background: linear-gradient(135deg, rgba(0, 255, 157, 0.1), rgba(0, 184, 255, 0.1));
         border: 1px solid #00ff9d;
         border-radius: 10px;
         padding: 15px;
-        margin: 10px 0;
+    }
+    
+    /* Animación de carga */
+    @keyframes pulse {
+        0% { opacity: 0.6; }
+        50% { opacity: 1; }
+        100% { opacity: 0.6; }
+    }
+    
+    .loading {
+        animation: pulse 1.5s infinite;
+        color: #00ff9d;
         font-family: 'Courier New', monospace;
-        word-break: break-all;
+    }
+    
+    /* Línea de tiempo futurista */
+    .timeline {
+        border-left: 2px solid #00ff9d;
+        padding-left: 20px;
+        margin-left: 10px;
+    }
+    
+    /* Efecto glitch para resultados */
+    @keyframes glitch {
+        0% { transform: translate(0); }
+        20% { transform: translate(-2px, 2px); }
+        40% { transform: translate(-2px, -2px); }
+        60% { transform: translate(2px, 2px); }
+        80% { transform: translate(2px, -2px); }
+        100% { transform: translate(0); }
+    }
+    
+    .glitch-text {
+        animation: glitch 0.3s infinite;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -183,27 +198,9 @@ st.markdown("""
 texto_ingresado = st.text_area(
     "📡 INGRESE TEXTO CIFRADO:",
     height=100,
-    placeholder="Ej: aG9sYQ==  |  Uryyb Jbeyq  |  khoor  |  CLAVECLAVE...  |  hola",
+    placeholder="Ej: aG9sYQ==  |  Uryyb Jbeyq  |  khoor  |  1a2b3c  |  hola",
     key="input_text"
 )
-
-# DETECCIÓN EN VIVO Y CONFIGURACIÓN XOR
-clave_xor = None
-if texto_ingresado:
-    algoritmo_temp = detector.predecir_algoritmo(texto_ingresado)
-    if "XOR" in algoritmo_temp:
-        st.info(f"🔑 ALGORITMO DETECTADO: **{algoritmo_temp}** - Ingresa la clave si la conoces")
-        with st.expander("🔐 CONFIGURACIÓN DE CLAVE XOR", expanded=True):
-            col1, col2 = st.columns([3, 1])
-            with col1:
-                clave_xor = st.text_input(
-                    "Ingrese la clave de encriptación:",
-                    value="clave",
-                    help="La clave usada para encriptar el mensaje (déjalo por defecto si no la sabes)"
-                )
-            with col2:
-                st.markdown("### 💡")
-                st.caption("Prueba: 'clave', 'key', 'CLAVE'")
 
 # Botón con efecto
 col1, col2, col3 = st.columns([1, 2, 1])
@@ -216,21 +213,7 @@ if analizar_btn and texto_ingresado:
     
     with st.spinner("⚡ PROCESANDO CON RED NEURONAL..."):
         time.sleep(1.5)
-        
-        # Procesar con o sin clave XOR
-        if clave_xor:
-            resultado = detector.procesar(texto_limpio, clave_xor)
-        else:
-            resultado = detector.procesar(texto_limpio)
-        
-        # Mostrar información de depuración en consola
-        print("="*50)
-        print("🔍 RESULTADO COMPLETO:")
-        print(f"Algoritmo: {resultado['algoritmo']}")
-        print(f"Texto original: {resultado['texto_original']}")
-        print(f"Texto descifrado: '{resultado['texto_descifrado']}'")
-        print(f"Longitud descifrado: {len(resultado['texto_descifrado'])}")
-        print("="*50)
+        resultado = detector.procesar(texto_limpio)
     
     # Timeline de análisis
     st.markdown("---")
@@ -239,15 +222,14 @@ if analizar_btn and texto_ingresado:
     col_res1, col_res2, col_res3 = st.columns(3)
     
     with col_res1:
-        st.markdown(f"""
-        <div class='output-box'>
+        st.markdown("""
+        <div style='background: rgba(0,255,157,0.05); padding: 20px; border-radius: 15px;'>
             <p style='color: #00ff9d; font-size: 0.9em;'>📥 INPUT</p>
-            <p style='color: white; font-family: monospace; font-size: 1.2em;'>{resultado['texto_original']}</p>
+            <p style='color: white; font-family: monospace; font-size: 1.2em;'>{}</p>
         </div>
-        """, unsafe_allow_html=True)
+        """.format(resultado['texto_original']), unsafe_allow_html=True)
     
     with col_res2:
-        # Color según algoritmo
         algoritmo_color = {
             "Base64": "#00ff9d",
             "ROT13": "#00b8ff",
@@ -258,42 +240,35 @@ if analizar_btn and texto_ingresado:
         color = next((v for k, v in algoritmo_color.items() if k in resultado['algoritmo']), "#00ff9d")
         
         st.markdown(f"""
-        <div class='output-box'>
+        <div style='background: rgba(0,255,157,0.05); padding: 20px; border-radius: 15px;'>
             <p style='color: {color}; font-size: 0.9em;'>🔍 ALGORITMO DETECTADO</p>
             <p style='color: white; font-size: 1.5em; font-weight: bold;'>{resultado['algoritmo']}</p>
         </div>
         """, unsafe_allow_html=True)
     
     with col_res3:
-        st.markdown(f"""
-        <div class='output-box'>
+        st.markdown("""
+        <div style='background: rgba(0,255,157,0.05); padding: 20px; border-radius: 15px;'>
             <p style='color: #00ff9d; font-size: 0.9em;'>📤 OUTPUT</p>
-            <p style='color: white; font-family: monospace; font-size: 1.2em;'>{resultado['texto_descifrado']}</p>
+            <p style='color: white; font-family: monospace; font-size: 1.2em;'>{}</p>
         </div>
-        """, unsafe_allow_html=True)
+        """.format(resultado['texto_descifrado']), unsafe_allow_html=True)
     
-    # Resultado destacado - VERSIÓN CORREGIDA QUE SIEMPRE MUESTRA ALGO
+    # Resultado destacado
     st.markdown("---")
     st.markdown("### 🔓 TEXTO DESCIFRADO")
     
-    # Asegurar que siempre haya algo que mostrar
-    texto_a_mostrar = resultado['texto_descifrado']
-    if not texto_a_mostrar or texto_a_mostrar.strip() == "":
-        texto_a_mostrar = "🔑 [Resultado vacío - Probablemente la clave es incorrecta]"
-    elif texto_a_mostrar.startswith("🔑 [XOR]"):
-        # Ya tiene formato, mantenerlo
-        pass
-    
-    if "Error" in texto_a_mostrar or "no se" in texto_a_mostrar.lower():
-        st.error(f"### ❌ {texto_a_mostrar}")
+    if "Error" in resultado["texto_descifrado"] or "no se puede" in resultado["texto_descifrado"].lower():
+        st.error(f"### ❌ {resultado['texto_descifrado']}")
     else:
         st.markdown(f"""
-        <div class='resultado-descifrado'>
-            <h1 style='color: white; font-size: 2.5em; text-shadow: 0 0 20px #00ff9d; word-break: break-all;'>
-                {texto_a_mostrar}
+        <div style='background: linear-gradient(135deg, #00ff9d20, #00b8ff20); 
+                    padding: 30px; border-radius: 20px; 
+                    border: 2px solid #00ff9d; text-align: center;'>
+            <h1 style='color: white; font-size: 3em; text-shadow: 0 0 20px #00ff9d;'>
+                {resultado['texto_descifrado']}
             </h1>
-            <p style='color: #00b8ff; margin-top: 20px;'>Decodificado con {resultado['algoritmo']}</p>
-            <p style='color: #888; font-size: 0.8em;'>Clave usada: {clave_xor if clave_xor else "clave (por defecto)"}</p>
+            <p style='color: #00b8ff;'>Decodificado con {resultado['algoritmo']}</p>
         </div>
         """, unsafe_allow_html=True)
     
@@ -318,15 +293,6 @@ if analizar_btn and texto_ingresado:
             "Valor": chars
         })
         st.dataframe(df_chars, use_container_width=True)
-        
-        # Información adicional de depuración
-        if st.checkbox("Mostrar información de depuración"):
-            st.json({
-                "texto_original": resultado['texto_original'],
-                "algoritmo": resultado['algoritmo'],
-                "texto_descifrado": resultado['texto_descifrado'],
-                "clave_usada": clave_xor if clave_xor else "clave (default)"
-            })
         
         st.markdown("</div>", unsafe_allow_html=True)
 

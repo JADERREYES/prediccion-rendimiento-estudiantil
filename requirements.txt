@@ -1,6 +1,8 @@
-﻿streamlit==1.42.2
-pandas==2.2.3
-numpy==2.2.4
-matplotlib==3.10.1
-scikit-learn==1.6.1
-requests==2.32.3
+﻿streamlit
+pandas
+numpy
+matplotlib
+scikit-learn
+joblib
+requests
+zipfile36
