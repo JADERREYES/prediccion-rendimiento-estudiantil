@@ -1,8 +1,7 @@
-﻿streamlit
-pandas
-numpy
-matplotlib
-scikit-learn
-joblib
-requests
-zipfile36
+﻿streamlit==1.29.0
+pandas==2.1.3
+numpy==1.24.3
+joblib==1.3.2
+scikit-learn==1.3.0
+protobuf==3.20.3
+tensorflow==2.13.0

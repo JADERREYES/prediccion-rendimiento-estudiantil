@@ -1,11 +1,32 @@
 # src/encriptacion.py - VERSIÓN FINAL CON DETECCIÓN MEJORADA PARA TODOS LOS ALGORITMOS
+# CON SOPORTE PARA STREAMLIT CLOUD (sin modificar la lógica principal)
+
 import joblib
 import numpy as np
 import os
 import base64
 import codecs
-import tensorflow as tf
 from pathlib import Path
+
+# === ADAPTACIÓN PARA STREAMLIT CLOUD ===
+# Intentar importar tensorflow, pero si no está disponible, continuar de todas formas
+try:
+    import tensorflow as tf
+    TENSORFLOW_DISPONIBLE = True
+except ImportError:
+    TENSORFLOW_DISPONIBLE = False
+    print("⚠️ TensorFlow no disponible - Usando modo de detección por reglas")
+    # Crear clases dummy para que el código no falle
+    class tf:
+        class keras:
+            @staticmethod
+            def models():
+                return None
+            
+            @staticmethod
+            def load_model(path):
+                return None
+# ======================================
 
 # Obtener la ruta base del proyecto
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -14,18 +35,31 @@ MODELOS_DIR = os.path.join(BASE_DIR, "modelos")
 class DetectorEncriptacion:
     def __init__(self):
         """Carga los modelos entrenados en Colab"""
-        try:
-            # Cargar scaler
-            self.scaler = joblib.load(os.path.join(MODELOS_DIR, "scaler.joblib"))
-            
-            # Cargar modelo .h5
-            self.modelo = tf.keras.models.load_model(os.path.join(MODELOS_DIR, "trained_mlp_model.h5"))
-            
-            self.entrenado = True
-            print("✅ Modelos de encriptación cargados correctamente")
-        except Exception as e:
-            print(f"❌ Error cargando modelos: {e}")
-            self.entrenado = False
+        self.entrenado = False
+        
+        # Solo intentar cargar modelos si tensorflow está disponible
+        if TENSORFLOW_DISPONIBLE:
+            try:
+                # Verificar que los archivos existen
+                scaler_path = os.path.join(MODELOS_DIR, "scaler.joblib")
+                model_path = os.path.join(MODELOS_DIR, "trained_mlp_model.h5")
+                
+                if os.path.exists(scaler_path) and os.path.exists(model_path):
+                    # Cargar scaler
+                    self.scaler = joblib.load(scaler_path)
+                    
+                    # Cargar modelo .h5
+                    self.modelo = tf.keras.models.load_model(model_path)
+                    
+                    self.entrenado = True
+                    print("✅ Modelos de encriptación cargados correctamente")
+                else:
+                    print(f"❌ Archivos de modelo no encontrados en {MODELOS_DIR}")
+            except Exception as e:
+                print(f"❌ Error cargando modelos: {e}")
+                self.entrenado = False
+        else:
+            print("ℹ️ TensorFlow no disponible - Usando detección por reglas")
     
     def extraer_caracteristicas(self, texto):
         """Convierte texto cifrado a 17 características numéricas"""
@@ -211,8 +245,8 @@ class DetectorEncriptacion:
                     print(f"🔍 Detectado TEXTO PLANO (contiene '{palabra}')")
                     return "📄 Texto Plano"
         
-        # 6. USAR EL MODELO DE IA SOLO SI TODO LO ANTERIOR FALLÓ
-        if self.entrenado:
+        # 6. USAR EL MODELO DE IA SOLO SI TODO LO ANTERIOR FALLÓ Y TENSORFLOW ESTÁ DISPONIBLE
+        if self.entrenado and TENSORFLOW_DISPONIBLE:
             try:
                 caracteristicas = self.extraer_caracteristicas(texto)
                 caracteristicas_scaled = self.scaler.transform(caracteristicas)
@@ -262,10 +296,8 @@ class DetectorEncriptacion:
             # Si es hexadecimal, convertir
             if all(c in '0123456789abcdef' for c in texto) and len(texto) % 2 == 0:
                 texto_bytes = bytes.fromhex(texto)
-                es_hex = True
             else:
                 texto_bytes = texto.encode('utf-8')
-                es_hex = False
             
             # Si no hay clave, usar "clave" por defecto
             if clave is None or clave == "":
@@ -371,4 +403,5 @@ class DetectorEncriptacion:
             "texto_descifrado": texto_descifrado
         }
 
+# Instancia global del detector
 detector = DetectorEncriptacion()
