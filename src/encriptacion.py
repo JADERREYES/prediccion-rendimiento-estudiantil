@@ -1,6 +1,8 @@
 """Módulo de análisis criptográfico con red neuronal."""
 
 import os
+import pickle
+
 import joblib
 import numpy as np
 import tensorflow as tf
@@ -38,7 +40,15 @@ class NeuralCryptAnalyzer:
             if os.path.exists(scaler_path):
                 self.scaler = joblib.load(scaler_path)
                 self.scaler_loaded = True
-        except Exception as error:
+        except (
+            OSError,
+            ValueError,
+            EOFError,
+            ModuleNotFoundError,
+            ImportError,
+            AttributeError,
+            pickle.UnpicklingError,
+        ) as error:
             print(f"[ERROR] No se pudo cargar scaler.joblib: {error}")
             self.scaler = None
             self.scaler_loaded = False
@@ -47,7 +57,13 @@ class NeuralCryptAnalyzer:
             if os.path.exists(model_path):
                 self.model = tf.keras.models.load_model(model_path)
                 self.model_loaded = True
-        except Exception as error:
+        except (
+            OSError,
+            ValueError,
+            ImportError,
+            TypeError,
+            AttributeError,
+        ) as error:
             print(f"[ERROR] No se pudo cargar trained_mlp_model.h5: {error}")
             self.model = None
             self.model_loaded = False
@@ -150,7 +166,12 @@ class NeuralCryptAnalyzer:
                 "probabilidades": pred.tolist(),
             }
 
-        except Exception as error:
+        except (
+            ValueError,
+            TypeError,
+            AttributeError,
+            IndexError,
+        ) as error:
             print(f"[ERROR] Fallo en predicción IA: {error}")
             return {
                 "algoritmo": None,
