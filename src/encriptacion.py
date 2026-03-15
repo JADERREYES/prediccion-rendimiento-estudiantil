@@ -1,407 +1,178 @@
-# src/encriptacion.py - VERSIÓN FINAL CON DETECCIÓN MEJORADA PARA TODOS LOS ALGORITMOS
-# CON SOPORTE PARA STREAMLIT CLOUD (sin modificar la lógica principal)
+"""Módulo de análisis criptográfico con red neuronal."""
 
+import os
 import joblib
 import numpy as np
-import os
-import base64
-import codecs
-from pathlib import Path
+import tensorflow as tf
 
-# === ADAPTACIÓN PARA STREAMLIT CLOUD ===
-# Intentar importar tensorflow, pero si no está disponible, continuar de todas formas
-try:
-    import tensorflow as tf
-    TENSORFLOW_DISPONIBLE = True
-except ImportError:
-    TENSORFLOW_DISPONIBLE = False
-    print("⚠️ TensorFlow no disponible - Usando modo de detección por reglas")
-    # Crear clases dummy para que el código no falle
-    class tf:
-        class keras:
-            @staticmethod
-            def models():
-                return None
-            
-            @staticmethod
-            def load_model(path):
-                return None
-# ======================================
+from src.entropy_analyzer import (
+    shannon_entropy,
+    ascii_range,
+    numeric_ratio,
+)
 
-# Obtener la ruta base del proyecto
-BASE_DIR = Path(__file__).resolve().parent.parent
-MODELOS_DIR = os.path.join(BASE_DIR, "modelos")
 
-class DetectorEncriptacion:
-    def __init__(self):
-        """Carga los modelos entrenados en Colab"""
-        self.entrenado = False
-        
-        # Solo intentar cargar modelos si tensorflow está disponible
-        if TENSORFLOW_DISPONIBLE:
-            try:
-                # Verificar que los archivos existen
-                scaler_path = os.path.join(MODELOS_DIR, "scaler.joblib")
-                model_path = os.path.join(MODELOS_DIR, "trained_mlp_model.h5")
-                
-                if os.path.exists(scaler_path) and os.path.exists(model_path):
-                    # Cargar scaler
-                    self.scaler = joblib.load(scaler_path)
-                    
-                    # Cargar modelo .h5
-                    self.modelo = tf.keras.models.load_model(model_path)
-                    
-                    self.entrenado = True
-                    print("✅ Modelos de encriptación cargados correctamente")
-                else:
-                    print(f"❌ Archivos de modelo no encontrados en {MODELOS_DIR}")
-            except Exception as e:
-                print(f"❌ Error cargando modelos: {e}")
-                self.entrenado = False
-        else:
-            print("ℹ️ TensorFlow no disponible - Usando detección por reglas")
-    
-    def extraer_caracteristicas(self, texto):
-        """Convierte texto cifrado a 17 características numéricas"""
-        if not texto or len(texto) == 0:
-            return np.zeros(17)
-        
-        # 1. Métricas básicas
-        longitud = len(texto)
-        mayusculas = sum(1 for c in texto if c.isupper())
-        minusculas = sum(1 for c in texto if c.islower())
-        digitos = sum(1 for c in texto if c.isdigit())
-        espacios = sum(1 for c in texto if c.isspace())
-        especiales = longitud - mayusculas - minusculas - digitos - espacios
-        
-        # 2. Caracteres específicos por algoritmo
-        hex_chars = sum(1 for c in texto if c.lower() in '0123456789abcdef')
-        base64_chars = sum(1 for c in texto if c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=')
-        
-        # 3. Entropía
-        from collections import Counter
-        import math
-        freqs = Counter(texto)
-        entropia = 0
-        if longitud > 0:
-            entropia = -sum((freq/longitud) * math.log2(freq/longitud) for freq in freqs.values())
-        
-        # 4. Patrones específicos
-        padding = texto.count('=')
-        termina_en_igual = 1 if texto.endswith('=') else 0
-        
-        # 5. 17 CARACTERÍSTICAS
-        features = [
-            longitud,                 # 1
-            mayusculas,               # 2
-            minusculas,                # 3
-            digitos,                   # 4
-            espacios,                  # 5
-            especiales,                # 6
-            hex_chars,                 # 7
-            base64_chars,              # 8
-            entropia,                  # 9
-            padding,                   # 10
-            len(set(texto)),           # 11
-            texto.count('+'),          # 12
-            texto.count('/'),          # 13
-            termina_en_igual,          # 14
-            1 if texto.replace(' ', '').isdigit() else 0,  # 15
-            1 if all(c in '01' for c in texto.replace(' ', '')) else 0,  # 16
-            1 if texto.isupper() else 0,  # 17
-        ]
-        
-        return np.array(features).reshape(1, -1)
-    
-    def detectar_rot13(self, texto):
-        """Detecta si el texto está en ROT13"""
-        try:
-            # Aplicar ROT13
-            probar = codecs.decode(texto, 'rot_13')
-            
-            # Lista de palabras comunes en español para detectar
-            palabras_comunes = [
-                'hola', 'como', 'estas', 'mundo', 'cifrado', 'encriptado',
-                'texto', 'mensaje', 'clave', 'secreto', 'hola', 'adios',
-                'buenos', 'dias', 'tardes', 'noches', 'por', 'favor',
-                'gracias', 'perdon', 'disculpa', 'ayuda', 'sistema',
-                'todo', 'puede', 'ser', 'para', 'con', 'sin', 'sobre',
-                'entre', 'durante', 'mediante', 'segun', 'segun'
-            ]
-            
-            probar_lower = probar.lower()
-            
-            # Verificar si el resultado contiene palabras comunes
-            for palabra in palabras_comunes:
-                if palabra in probar_lower:
-                    return True, probar
-            
-            # Verificar proporción de letras y espacios
-            letras = sum(1 for c in probar if c.isalpha())
-            espacios = sum(1 for c in probar if c.isspace())
-            
-            # Si tiene buena proporción de letras y espacios
-            if letras > len(probar) * 0.5:
-                return True, probar
-            
-            return False, texto
-        except:
-            return False, texto
-    
-    def detectar_cesar(self, texto):
-        """Detecta si el texto está en Cifrado César"""
-        try:
-            mejores_resultados = []
-            
-            for shift in range(1, 26):
-                resultado = ""
-                for char in texto:
-                    if char.isalpha():
-                        mayus = char.isupper()
-                        base = ord('A') if mayus else ord('a')
-                        nuevo_char = chr((ord(char) - base - shift) % 26 + base)
-                        resultado += nuevo_char
-                    else:
-                        resultado += char
-                
-                # Calcular puntuación de legibilidad
-                palabras_comunes = ['hola', 'como', 'esta', 'mundo', 'texto', 'mensaje']
-                puntaje = sum(1 for palabra in palabras_comunes if palabra in resultado.lower())
-                puntaje += sum(1 for c in resultado if c.isalpha()) * 0.1
-                
-                mejores_resultados.append((puntaje, shift, resultado))
-            
-            # Elegir el mejor resultado
-            mejor = max(mejores_resultados, key=lambda x: x[0])
-            
-            # Si tiene buena puntuación, devolverlo
-            if mejor[0] > len(texto) * 0.3:
-                return True, mejor[2], mejor[1]
-            
-            return False, texto, 0
-        except:
-            return False, texto, 0
-    
-    def detectar_base64(self, texto):
-        """Detecta si el texto está en Base64"""
-        try:
-            # Verificar formato Base64
-            if texto.endswith('=') and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=' for c in texto):
-                # Intentar decodificar
-                decodificado = base64.b64decode(texto).decode('utf-8', errors='ignore')
-                # Verificar si el resultado tiene letras
-                if any(c.isalpha() for c in decodificado):
-                    return True, decodificado
-            return False, texto
-        except:
-            return False, texto
-    
-    def detectar_xor(self, texto):
-        """Detecta si el texto podría ser XOR (hexadecimal)"""
-        try:
-            # Verificar si es hexadecimal
-            if all(c in '0123456789abcdef' for c in texto) and len(texto) % 2 == 0:
-                return True
-            return False
-        except:
-            return False
-    
-    def predecir_algoritmo(self, texto):
-        """Predice qué algoritmo de encriptación se usó - VERSIÓN MEJORADA"""
-        
-        # 1. DETECTAR BASE64
-        es_base64, resultado_base64 = self.detectar_base64(texto)
-        if es_base64:
-            print(f"🔍 Detectado BASE64: '{resultado_base64[:50]}...'")
-            return "🔐 Base64"
-        
-        # 2. DETECTAR ROT13
-        es_rot13, resultado_rot13 = self.detectar_rot13(texto)
-        if es_rot13:
-            print(f"🔍 Detectado ROT13: '{resultado_rot13[:50]}...'")
-            return "🔄 ROT13"
-        
-        # 3. DETECTAR CÉSAR
-        es_cesar, resultado_cesar, shift = self.detectar_cesar(texto)
-        if es_cesar:
-            print(f"🔍 Detectado CÉSAR (shift={shift}): '{resultado_cesar[:50]}...'")
-            return "⚡ Cifrado César"
-        
-        # 4. DETECTAR XOR (hexadecimal)
-        if self.detectar_xor(texto):
-            print(f"🔍 Detectado XOR (formato hexadecimal)")
-            return "💫 XOR"
-        
-        # 5. VERIFICAR SI ES TEXTO PLANO
-        letras = sum(1 for c in texto if c.isalpha())
-        espacios = sum(1 for c in texto if c.isspace())
-        
-        # Si tiene muchas letras y espacios, es texto plano
-        if letras > len(texto) * 0.5:
-            palabras_comunes = ['hola', 'como', 'esta', 'mundo', 'texto', 'clave']
-            texto_lower = texto.lower()
-            for palabra in palabras_comunes:
-                if palabra in texto_lower:
-                    print(f"🔍 Detectado TEXTO PLANO (contiene '{palabra}')")
-                    return "📄 Texto Plano"
-        
-        # 6. USAR EL MODELO DE IA SOLO SI TODO LO ANTERIOR FALLÓ Y TENSORFLOW ESTÁ DISPONIBLE
-        if self.entrenado and TENSORFLOW_DISPONIBLE:
-            try:
-                caracteristicas = self.extraer_caracteristicas(texto)
-                caracteristicas_scaled = self.scaler.transform(caracteristicas)
-                
-                prediccion_proba = self.modelo.predict(caracteristicas_scaled, verbose=0)
-                prediccion = np.argmax(prediccion_proba, axis=1)[0]
-                
-                algoritmos = {
-                    0: "🔐 Base64",
-                    1: "🔄 ROT13",
-                    2: "⚡ Cifrado César",
-                    3: "💫 XOR",
-                    4: "📄 Texto Plano"
-                }
-                
-                algoritmo = algoritmos.get(prediccion, "❓ Desconocido")
-                print(f"🔍 IA detectó: {algoritmo}")
-                return algoritmo
-            except Exception as e:
-                print(f"❌ Error en IA: {e}")
-                return self._detectar_por_reglas(texto)
-        else:
-            return self._detectar_por_reglas(texto)
-    
-    def _detectar_por_reglas(self, texto):
-        """Detección por reglas simples (modo DEMO)"""
-        if texto.endswith('=') and all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=' for c in texto):
-            return "🔐 Base64"
-        elif all(c in '0123456789abcdef' for c in texto) and len(texto) % 2 == 0:
-            return "💫 XOR"
-        elif all(c.isalpha() or c.isspace() for c in texto):
-            # Probar si es ROT13
-            try:
-                probar = codecs.decode(texto, 'rot_13')
-                palabras = ['hola', 'hello', 'como', 'mundo', 'cifrado']
-                if any(palabra in probar.lower() for palabra in palabras):
-                    return "🔄 ROT13"
-            except:
-                pass
-            return "⚡ Cifrado César"
-        else:
-            return "📄 Texto Plano"
-    
-    def descifrar_xor(self, texto, clave=None):
-        """Descifra XOR - VERSIÓN MEJORADA"""
-        try:
-            # Si es hexadecimal, convertir
-            if all(c in '0123456789abcdef' for c in texto) and len(texto) % 2 == 0:
-                texto_bytes = bytes.fromhex(texto)
-            else:
-                texto_bytes = texto.encode('utf-8')
-            
-            # Si no hay clave, usar "clave" por defecto
-            if clave is None or clave == "":
-                clave = "clave"
-            
-            clave_bytes = clave.encode('utf-8')
-            
-            # Aplicar XOR
-            resultado_bytes = bytearray()
-            for i, b in enumerate(texto_bytes):
-                resultado_bytes.append(b ^ clave_bytes[i % len(clave_bytes)])
-            
-            # Convertir a string
-            resultado = resultado_bytes.decode('utf-8', errors='ignore')
-            
-            # Verificar si el resultado es legible
-            letras = sum(1 for c in resultado if c.isalpha())
-            if letras > len(resultado) * 0.3:
-                return resultado
-            else:
-                return f"🔑 Resultado con clave '{clave}': {resultado}"
-                    
-        except Exception as e:
-            return f"❌ Error XOR: {str(e)}"
-    
-    def descifrar_cesar_avanzado(self, texto):
-        """Intenta varios desplazamientos para César"""
-        mejores_resultados = []
-        
-        for shift in range(1, 26):
-            resultado = ""
-            for char in texto:
-                if char.isalpha():
-                    mayus = char.isupper()
-                    base = ord('A') if mayus else ord('a')
-                    nuevo_char = chr((ord(char) - base - shift) % 26 + base)
-                    resultado += nuevo_char
-                else:
-                    resultado += char
-            
-            # Calcular puntuación
-            palabras_comunes = ['hola', 'como', 'esta', 'mundo', 'texto', 'mensaje', 'clave']
-            puntaje = sum(2 for palabra in palabras_comunes if palabra in resultado.lower())
-            puntaje += sum(0.1 for c in resultado if c.isalpha())
-            puntaje += sum(0.5 for c in resultado if c.isspace())
-            
-            mejores_resultados.append((puntaje, shift, resultado))
-        
-        # Elegir el mejor resultado
-        mejor = max(mejores_resultados, key=lambda x: x[0])
-        
-        # Si el mejor resultado tiene buena puntuación
-        if mejor[0] > 0:
-            return f"{mejor[2]} (shift={mejor[1]})"
-        else:
-            return texto
-    
-    def descifrar(self, texto, algoritmo, clave_xor=None):
-        """Descifra el texto según el algoritmo detectado"""
-        try:
-            if "Base64" in algoritmo:
-                try:
-                    return base64.b64decode(texto).decode('utf-8', errors='ignore')
-                except:
-                    return f"❌ Error decodificando Base64"
-            
-            elif "ROT13" in algoritmo:
-                try:
-                    return codecs.decode(texto, 'rot_13')
-                except:
-                    return f"❌ Error decodificando ROT13"
-            
-            elif "César" in algoritmo:
-                return self.descifrar_cesar_avanzado(texto)
-            
-            elif "XOR" in algoritmo:
-                return self.descifrar_xor(texto, clave_xor)
-            
-            elif "Plano" in algoritmo:
-                return texto
-            
-            else:
-                return f"⚠️ Algoritmo no soportado: {algoritmo}"
-                
-        except Exception as e:
-            return f"❌ Error: {str(e)}"
-    
-    def procesar(self, texto, clave_xor=None):
-        """Método principal: detecta algoritmo Y descifra"""
-        algoritmo = self.predecir_algoritmo(texto)
-        texto_descifrado = self.descifrar(texto, algoritmo, clave_xor)
-        
-        # Para debugging
-        print("="*60)
-        print(f"📊 TEXTO ORIGINAL: {texto}")
-        print(f"🔍 ALGORITMO DETECTADO: {algoritmo}")
-        print(f"✅ TEXTO DESCIFRADO: {texto_descifrado}")
-        print("="*60)
-        
-        return {
-            "algoritmo": algoritmo,
-            "texto_original": texto,
-            "texto_descifrado": texto_descifrado
+class NeuralCryptAnalyzer:
+    """Analizador criptográfico basado en modelo neuronal + scaler."""
+
+    def __init__(
+        self,
+        model_path="modelos/trained_mlp_model.h5",
+        scaler_path="modelos/scaler.joblib",
+    ):
+        """Inicializa modelo, scaler y mapa de clases."""
+        self.model = None
+        self.scaler = None
+        self.model_loaded = False
+        self.scaler_loaded = False
+
+        # Ajusta este orden solo si descubres que tu entrenamiento usó otro
+        self.class_map = {
+            0: "Base64",
+            1: "ROT13",
+            2: "Plain",
+            3: "Cesar",
+            4: "XOR",
         }
 
-# Instancia global del detector
-detector = DetectorEncriptacion()
+        try:
+            if os.path.exists(scaler_path):
+                self.scaler = joblib.load(scaler_path)
+                self.scaler_loaded = True
+        except (OSError, ValueError):
+            self.scaler = None
+            self.scaler_loaded = False
+
+        try:
+            if os.path.exists(model_path):
+                self.model = tf.keras.models.load_model(model_path)
+                self.model_loaded = True
+        except (OSError, ValueError):
+            self.model = None
+            self.model_loaded = False
+
+    def is_ready(self):
+        """Indica si el modelo y el scaler están listos."""
+        return self.model_loaded and self.scaler_loaded
+
+    def extraer_caracteristicas(self, texto):
+        """Extrae el vector de 17 características esperado por el modelo."""
+        texto = texto or ""
+        longitud = len(texto)
+
+        entropia = shannon_entropy(texto)
+        ratio_numerico = numeric_ratio(texto)
+
+        ascii_min, ascii_max = ascii_range(texto)
+        ascii_diff = ascii_max - ascii_min if texto else 0
+        ascii_sum = sum(ord(c) for c in texto)
+
+        uppercase_ratio = sum(1 for c in texto if c.isupper()) / max(longitud, 1)
+        lowercase_ratio = sum(1 for c in texto if c.islower()) / max(longitud, 1)
+        espacio_ratio = sum(1 for c in texto if c.isspace()) / max(longitud, 1)
+
+        simbolo_ratio = sum(
+            1 for c in texto if not c.isalnum() and not c.isspace()
+        ) / max(longitud, 1)
+
+        unique_ratio = len(set(texto)) / max(longitud, 1)
+        vowel_ratio = sum(1 for c in texto if c.lower() in "aeiou") / max(longitud, 1)
+
+        repetidos = sum(
+            1 for indice in range(1, len(texto))
+            if texto[indice] == texto[indice - 1]
+        ) / max(longitud - 1, 1)
+
+        base64_ratio = sum(
+            1
+            for c in texto
+            if c in "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+        ) / max(longitud, 1)
+
+        digit_ratio = sum(1 for c in texto if c.isdigit()) / max(longitud, 1)
+        alpha_ratio = sum(1 for c in texto if c.isalpha()) / max(longitud, 1)
+
+        # Se mantienen estas dos para completar coherencia estadística del modelo
+        hex_ratio = sum(
+            1 for c in texto if c in "0123456789abcdefABCDEF"
+        ) / max(longitud, 1)
+
+        binary_ratio = sum(
+            1 for c in texto if c in "01 "
+        ) / max(longitud, 1)
+
+        features = [
+            longitud,          # 1
+            entropia,          # 2
+            ratio_numerico,    # 3
+            uppercase_ratio,   # 4
+            lowercase_ratio,   # 5
+            espacio_ratio,     # 6
+            simbolo_ratio,     # 7
+            ascii_min,         # 8
+            ascii_max,         # 9
+            ascii_diff,        # 10
+            ascii_sum,         # 11
+            unique_ratio,      # 12
+            vowel_ratio,       # 13
+            repetidos,         # 14
+            base64_ratio,      # 15
+            digit_ratio,       # 16
+            alpha_ratio,       # 17
+        ]
+
+        # Si en el futuro necesitas usar hex_ratio o binary_ratio,
+        # agrégalos solo si vuelves a entrenar el modelo.
+        _ = hex_ratio, binary_ratio
+
+        return np.array(features, dtype=float).reshape(1, -1)
+
+    def predecir(self, texto):
+        """Realiza la predicción con IA y devuelve resultado estructurado."""
+        if not self.is_ready():
+            return {
+                "algoritmo": None,
+                "confianza": 0.0,
+                "modo": "Reglas",
+                "probabilidades": None,
+            }
+
+        try:
+            caracteristicas = self.extraer_caracteristicas(texto)
+
+            if caracteristicas.shape[1] != self.scaler.n_features_in_:
+                return {
+                    "algoritmo": None,
+                    "confianza": 0.0,
+                    "modo": "Reglas",
+                    "probabilidades": None,
+                }
+
+            caracteristicas_scaled = self.scaler.transform(caracteristicas)
+            pred = self.model.predict(caracteristicas_scaled, verbose=0)[0]
+
+            best_index = int(np.argmax(pred))
+            algoritmo = self.class_map.get(best_index, "Unknown")
+            confianza = float(pred[best_index]) * 100.0
+
+            return {
+                "algoritmo": algoritmo,
+                "confianza": confianza,
+                "modo": "IA",
+                "probabilidades": pred.tolist(),
+            }
+
+        except (ValueError, TypeError, IndexError):
+            return {
+                "algoritmo": None,
+                "confianza": 0.0,
+                "modo": "Reglas",
+                "probabilidades": None,
+            }
+
+    def estado_modelo(self):
+        """Devuelve el estado de carga del modelo y scaler."""
+        return {
+            "model_loaded": self.model_loaded,
+            "scaler_loaded": self.scaler_loaded,
+        }

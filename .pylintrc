@@ -1,0 +1,10 @@
+[MASTER]
+init-hook=
+    import sys;
+    sys.path.append(r'C:\Users\ferne\Desktop\prediccion-estudiantil');
+    sys.path.append(r'C:\Users\ferne\Desktop\prediccion-estudiantil\venv\Lib\site-packages')
+
+[MESSAGES CONTROL]
+disable=
+    line-too-long,
+    missing-final-newline
