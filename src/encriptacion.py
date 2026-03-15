@@ -26,7 +26,6 @@ class NeuralCryptAnalyzer:
         self.model_loaded = False
         self.scaler_loaded = False
 
-        # Ajusta este orden solo si descubres que tu entrenamiento usó otro
         self.class_map = {
             0: "Base64",
             1: "ROT13",
@@ -39,7 +38,8 @@ class NeuralCryptAnalyzer:
             if os.path.exists(scaler_path):
                 self.scaler = joblib.load(scaler_path)
                 self.scaler_loaded = True
-        except (OSError, ValueError):
+        except Exception as error:
+            print(f"[ERROR] No se pudo cargar scaler.joblib: {error}")
             self.scaler = None
             self.scaler_loaded = False
 
@@ -47,7 +47,8 @@ class NeuralCryptAnalyzer:
             if os.path.exists(model_path):
                 self.model = tf.keras.models.load_model(model_path)
                 self.model_loaded = True
-        except (OSError, ValueError):
+        except Exception as error:
+            print(f"[ERROR] No se pudo cargar trained_mlp_model.h5: {error}")
             self.model = None
             self.model_loaded = False
 
@@ -92,38 +93,25 @@ class NeuralCryptAnalyzer:
         digit_ratio = sum(1 for c in texto if c.isdigit()) / max(longitud, 1)
         alpha_ratio = sum(1 for c in texto if c.isalpha()) / max(longitud, 1)
 
-        # Se mantienen estas dos para completar coherencia estadística del modelo
-        hex_ratio = sum(
-            1 for c in texto if c in "0123456789abcdefABCDEF"
-        ) / max(longitud, 1)
-
-        binary_ratio = sum(
-            1 for c in texto if c in "01 "
-        ) / max(longitud, 1)
-
         features = [
-            longitud,          # 1
-            entropia,          # 2
-            ratio_numerico,    # 3
-            uppercase_ratio,   # 4
-            lowercase_ratio,   # 5
-            espacio_ratio,     # 6
-            simbolo_ratio,     # 7
-            ascii_min,         # 8
-            ascii_max,         # 9
-            ascii_diff,        # 10
-            ascii_sum,         # 11
-            unique_ratio,      # 12
-            vowel_ratio,       # 13
-            repetidos,         # 14
-            base64_ratio,      # 15
-            digit_ratio,       # 16
-            alpha_ratio,       # 17
+            longitud,
+            entropia,
+            ratio_numerico,
+            uppercase_ratio,
+            lowercase_ratio,
+            espacio_ratio,
+            simbolo_ratio,
+            ascii_min,
+            ascii_max,
+            ascii_diff,
+            ascii_sum,
+            unique_ratio,
+            vowel_ratio,
+            repetidos,
+            base64_ratio,
+            digit_ratio,
+            alpha_ratio,
         ]
-
-        # Si en el futuro necesitas usar hex_ratio o binary_ratio,
-        # agrégalos solo si vuelves a entrenar el modelo.
-        _ = hex_ratio, binary_ratio
 
         return np.array(features, dtype=float).reshape(1, -1)
 
@@ -162,7 +150,8 @@ class NeuralCryptAnalyzer:
                 "probabilidades": pred.tolist(),
             }
 
-        except (ValueError, TypeError, IndexError):
+        except Exception as error:
+            print(f"[ERROR] Fallo en predicción IA: {error}")
             return {
                 "algoritmo": None,
                 "confianza": 0.0,
